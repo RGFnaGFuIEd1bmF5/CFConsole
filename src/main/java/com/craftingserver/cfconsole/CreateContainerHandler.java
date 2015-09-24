@@ -1,6 +1,5 @@
 package com.craftingserver.cfconsole;
 
-import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
@@ -16,17 +15,13 @@ import java.util.Map;
  */
 public class CreateContainerHandler implements HttpHandler {
 
-    private DockerClient dockerClient;
-
-    public CreateContainerHandler(DockerClient dockerClient) {
-        this.dockerClient = dockerClient;
-    }
-
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         String gameID = getGameID(httpServerExchange);
 
         if (isGameIDValid(gameID)) {
-            httpServerExchange.setStatusCode(StatusCodes.CREATED);
+            CreatedContainer createdContainer = createContainer(gameID);
+            String createdContainerJSON = createdContainer.toJSON();
+            sendCreatedContainerJSON(createdContainerJSON, httpServerExchange);
         } else {
             httpServerExchange.setStatusCode(StatusCodes.NOT_FOUND);
         }
@@ -53,7 +48,7 @@ public class CreateContainerHandler implements HttpHandler {
      * @param gameID
      * @return containerID
      */
-    private String createContainer(String gameID) {
+    private CreatedContainer createContainer(String gameID) {
         String createCmdString = "itzg/minecraft-server";
 
         ExposedPort tcp22 = ExposedPort.tcp(22);
@@ -63,13 +58,28 @@ public class CreateContainerHandler implements HttpHandler {
         portBindings.bind(tcp22, Ports.Binding(11022));
         portBindings.bind(tcp23, Ports.Binding(11023));
 
-        CreateContainerResponse container = dockerClient
+        CreateContainerResponse container = App.dockerClient
                 .createContainerCmd(createCmdString)
                 .withExposedPorts(tcp22, tcp23)
                 .exec();
 
-        dockerClient.startContainerCmd(container.getId()).exec();
+        App.dockerClient.startContainerCmd(container.getId()).exec();
 
-        return container.getId();
+        // TODO these variables must be retrived to create CreatedContainer
+        String host = "This must be retrieved back from dockerClient";
+        int exposedPort = 3131;//"This must be one of the ports defined above"
+        String contianerID = container.getId();
+
+        return new CreatedContainer(host, exposedPort, contianerID);
     }
+
+    private void sendCreatedContainerJSON(String createdContainerJSON, HttpServerExchange exchange) {
+        if (createdContainerJSON == null) {
+            exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+        } else {
+            exchange.setStatusCode(StatusCodes.CREATED);
+        }
+        exchange.getResponseSender().send(createdContainerJSON);
+    }
+
 }

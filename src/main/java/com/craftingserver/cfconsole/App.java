@@ -1,12 +1,13 @@
 package com.craftingserver.cfconsole;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.api.model.SearchItem;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import io.undertow.Undertow;
-import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.PathTemplateHandler;
 
 import java.util.List;
@@ -17,10 +18,9 @@ import java.util.List;
 public class App {
 
 
-    private static DockerClient dockerClient;
+    public static DockerClient dockerClient;
 
     public static void main(final String[] args) {
-
         initDockerClient();
         initServer();
     }
@@ -46,7 +46,7 @@ public class App {
 
     private static PathTemplateHandler getMyPathTemplateHandler() {
         PathTemplateHandler handler = new PathTemplateHandler();
-        handler.add("/container/create/{gameID}", new CreateContainerHandler(dockerClient));
+        handler.add("/container/create/{gameID}", new CreateContainerHandler());
         return handler;
     }
 }
