@@ -23,13 +23,7 @@ public class CreateContainerHandler implements HttpHandler {
     }
 
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-        String gameID = getGameID(httpServerExchange);
-
-        if (isGameIDValid(gameID)) {
-            httpServerExchange.setStatusCode(StatusCodes.CREATED);
-        } else {
-            httpServerExchange.setStatusCode(StatusCodes.NOT_FOUND);
-        }
+        System.out.println(this.createContainer());
     }
 
     private String getGameID(HttpServerExchange exchange) {
@@ -53,22 +47,19 @@ public class CreateContainerHandler implements HttpHandler {
      * @param gameID
      * @return containerID
      */
-    private String createContainer(String gameID) {
-        String createCmdString = "itzg/minecraft-server";
+    private String createContainer() {
 
         ExposedPort tcp22 = ExposedPort.tcp(22);
         ExposedPort tcp23 = ExposedPort.tcp(23);
 
-        Ports portBindings = new Ports();
-        portBindings.bind(tcp22, Ports.Binding(11022));
-        portBindings.bind(tcp23, Ports.Binding(11023));
-
-        CreateContainerResponse container = dockerClient
-                .createContainerCmd(createCmdString)
+        CreateContainerResponse container = dockerClient.createContainerCmd("itzg/minecraft-server")
+                .withCmd("sleep", "9999")
+                .withCmd("interactive", "true")
+                .withCmd("tty", "true")
+                .withEnv("EULA", "TRUE")
+                .withEnv("true")
                 .withExposedPorts(tcp22, tcp23)
                 .exec();
-
-        dockerClient.startContainerCmd(container.getId()).exec();
 
         return container.getId();
     }

@@ -46,7 +46,7 @@ public class App {
 
     private static PathTemplateHandler getMyPathTemplateHandler() {
         PathTemplateHandler handler = new PathTemplateHandler();
-        handler.add("/container/create/{gameID}", new CreateContainerHandler(dockerClient));
+        handler.add("/container/create", new CreateContainerHandler(dockerClient));
         return handler;
     }
 }
