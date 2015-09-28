@@ -2,6 +2,7 @@ package com.craftingserver.cfconsole;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
 import io.undertow.server.HttpHandler;
@@ -49,17 +50,17 @@ public class CreateContainerHandler implements HttpHandler {
      */
     private String createContainer() {
 
-        ExposedPort tcp22 = ExposedPort.tcp(22);
-        ExposedPort tcp23 = ExposedPort.tcp(23);
+        ExposedPort tcp22 = ExposedPort.tcp(25565);
+
+        Ports portBindings = new Ports();
+        portBindings.bind(tcp22, Ports.Binding(25565));
 
         CreateContainerResponse container = dockerClient.createContainerCmd("itzg/minecraft-server")
-                .withCmd("sleep", "9999")
-                .withCmd("interactive", "true")
-                .withCmd("tty", "true")
-                .withEnv("EULA", "TRUE")
-                .withEnv("true")
-                .withExposedPorts(tcp22, tcp23)
-                .exec();
+                .withEnv("EULA=TRUE","VERSION=LATEST").withCmd("/start")
+                .withExposedPorts(tcp22).withPortBindings(portBindings).withPublishAllPorts(true).exec();
+
+        dockerClient.startContainerCmd(container.getId()).exec();
+//        ,"interactive", "true","sleep", "9999","name","mc","env", "[EULA=TRUE]"
 
         return container.getId();
     }
