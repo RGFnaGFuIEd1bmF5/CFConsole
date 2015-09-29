@@ -1,7 +1,9 @@
 package com.craftingserver.cfconsole;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.InternetProtocol;
 import com.github.dockerjava.api.model.Ports;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -49,28 +51,33 @@ public class CreateContainerHandler implements HttpHandler {
      * @return containerID
      */
     private CreatedContainer createContainer(String gameID) {
-        String createCmdString = "itzg/minecraft-server";
 
-        ExposedPort tcp22 = ExposedPort.tcp(22);
-        ExposedPort tcp23 = ExposedPort.tcp(23);
+        String createContainerCmdArg = "itzg/minecraft-server";
 
-        Ports portBindings = new Ports();
-        portBindings.bind(tcp22, Ports.Binding(11022));
-        portBindings.bind(tcp23, Ports.Binding(11023));
-
-        CreateContainerResponse container = App.dockerClient
-                .createContainerCmd(createCmdString)
-                .withExposedPorts(tcp22, tcp23)
+        CreateContainerResponse container = App.dockerClient.createContainerCmd(createContainerCmdArg)
+                .withEnv("EULA=TRUE")
+                .withPublishAllPorts(true)
                 .exec();
 
         App.dockerClient.startContainerCmd(container.getId()).exec();
 
-        // TODO these variables must be retrived to create CreatedContainer
-        String host = "This must be retrieved back from dockerClient";
-        int exposedPort = 3131;//"This must be one of the ports defined above"
-        String contianerID = container.getId();
+        String host = getDockerHost();
+        int exposedPort = getExposedPort(container.getId());
 
-        return new CreatedContainer(host, exposedPort, contianerID);
+        return new CreatedContainer(host, exposedPort, container.getId());
+    }
+
+    private String getDockerHost() {
+        return App.dockerClientConfig.getUri().getHost();
+    }
+
+    private int getExposedPort(String containerID) {
+        InspectContainerResponse containerInfo = App.dockerClient.inspectContainerCmd(containerID).exec();
+        Map<ExposedPort, Ports.Binding[]> bindings = containerInfo.getNetworkSettings().getPorts().getBindings();
+        ExposedPort port = new ExposedPort(25565, InternetProtocol.TCP);
+        Ports.Binding[] bindingArray = bindings.get(port);
+
+        return bindingArray[0].getHostPort();
     }
 
     private void sendCreatedContainerJSON(String createdContainerJSON, HttpServerExchange exchange) {
