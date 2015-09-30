@@ -1,10 +1,13 @@
 package com.craftingserver.cfconsole;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import io.undertow.Undertow;
 import io.undertow.server.handlers.PathTemplateHandler;
+
+import java.util.List;
 
 /**
  * Created by buraktutanlar on 20/09/15.
@@ -14,7 +17,7 @@ public class App {
     public static DockerClient dockerClient;
     public static DockerClientConfig dockerClientConfig;
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws Exception {
         initDockerClient();
         initServer();
     }
@@ -42,5 +45,13 @@ public class App {
         PathTemplateHandler handler = new PathTemplateHandler();
         handler.add("/container/create/{gameID}", new CreateContainerHandler());
         return handler;
+    }
+
+    // TODO Move this into DockerManager singleton when it is implemented.
+    private void deleteAllContainers() {
+        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        for (Container container : containers) {
+            dockerClient.removeContainerCmd(container.getId()).exec();
+        }
     }
 }
