@@ -10,8 +10,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 public class JSONModel {
 
     private static ObjectMapper objectMapper = new ObjectMapper()
-            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-            .setVisibility(Json);
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
     /**
      * @return JSON representation of object or null if JsonProcessingException caught.
