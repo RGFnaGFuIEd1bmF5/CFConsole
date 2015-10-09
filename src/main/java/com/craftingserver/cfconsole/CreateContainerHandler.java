@@ -24,17 +24,6 @@ public class CreateContainerHandler implements HttpHandler {
         }
     }
 
-    private void tryToProvideNewContainer(String gameID, HttpServerExchange httpServerExchange) {
-        try {
-            CreatedContainer createdContainer = createContainer(gameID);
-            sendCreatedContainer(createdContainer, httpServerExchange);
-        } catch (NotFoundException e) {
-            sendNotFoundException(e, httpServerExchange);
-        } catch (NotModifiedException e) {
-            sendNotModifiedException(e, httpServerExchange);
-        }
-    }
-
     private String getGameID(HttpServerExchange exchange) {
         Map<String, Deque<String>> queryParams = exchange.getQueryParameters();
         return queryParams.get("gameID").getFirst();
@@ -46,6 +35,17 @@ public class CreateContainerHandler implements HttpHandler {
         } else {
             System.out.println("This game couldn't recognized: " + gameID);
             return false;
+        }
+    }
+
+    private void tryToProvideNewContainer(String gameID, HttpServerExchange httpServerExchange) {
+        try {
+            CreatedContainer createdContainer = createContainer(gameID);
+            sendCreatedContainer(createdContainer, httpServerExchange);
+        } catch (NotFoundException e) {
+            sendNotFoundException(e, httpServerExchange);
+        } catch (NotModifiedException e) {
+            sendNotModifiedException(e, httpServerExchange);
         }
     }
 

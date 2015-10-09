@@ -1,13 +1,7 @@
 package com.craftingserver.cfconsole;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
 import io.undertow.Undertow;
 import io.undertow.server.handlers.PathTemplateHandler;
-
-import java.util.List;
 
 /**
  * Created by buraktutanlar on 20/09/15.
@@ -28,6 +22,8 @@ public class App {
     private static PathTemplateHandler getMyPathTemplateHandler() {
         PathTemplateHandler handler = new PathTemplateHandler();
         handler.add("/container/create/{gameID}", new CreateContainerHandler());
+        handler.add("/container/start/{containerID}", new StartContainerHandler());
+        handler.add("/container/stop/{containerID}", new StopContainerHandler());
         return handler;
     }
 }
