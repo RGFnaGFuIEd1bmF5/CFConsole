@@ -63,6 +63,14 @@ public class DockerManager {
         dockerClient.stopContainerCmd(containerID).exec();
     }
 
+    public void pauseContainer(String containerID) throws  NotFoundException, NotModifiedException {
+        dockerClient.pauseContainerCmd(containerID).exec();
+    }
+
+    public void unpauseContainer(String containerID) throws  NotFoundException, NotModifiedException {
+        dockerClient.unpauseContainerCmd(containerID);
+    }
+
     public String getDockerHost() {
         return dockerClientConfig.getUri().getHost();
     }

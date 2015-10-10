@@ -14,14 +14,27 @@ import java.util.Map;
  */
 public abstract class ContainerCmdHandler implements HttpHandler {
 
-    public abstract void handleRequest(HttpServerExchange httpServerExchange) throws Exception;
+    protected abstract void processCmd(String containerID) throws NotFoundException, NotModifiedException;
 
-    protected String getContainerID(HttpServerExchange exchange) {
+    public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        String containerID = getContainerID(httpServerExchange);
+
+        try {
+            processCmd(containerID);
+            sendEmpty200(httpServerExchange);
+        } catch (NotFoundException e) {
+            sendNotFoundException(e, httpServerExchange);
+        } catch (NotModifiedException e) {
+            sendNotModifiedException(e, httpServerExchange);
+        }
+    }
+
+    private String getContainerID(HttpServerExchange exchange) {
         Map<String, Deque<String>> queryParams = exchange.getQueryParameters();
         return queryParams.get("containerID").getFirst();
     }
 
-    protected void sendNotFoundException(NotFoundException e, HttpServerExchange exchange) {
+    private void sendNotFoundException(NotFoundException e, HttpServerExchange exchange) {
         String json = new DockerException("NotFoundException", e.getMessage()).toJSON();
         if (json == null) {
             exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
@@ -31,7 +44,7 @@ public abstract class ContainerCmdHandler implements HttpHandler {
         exchange.getResponseSender().send(json);
     }
 
-    protected void sendNotModifiedException(NotModifiedException e, HttpServerExchange exchange) {
+    private void sendNotModifiedException(NotModifiedException e, HttpServerExchange exchange) {
         String json = new DockerException("NotModifiedException", e.getMessage()).toJSON();
         if (json == null) {
             exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
@@ -39,5 +52,10 @@ public abstract class ContainerCmdHandler implements HttpHandler {
             exchange.setStatusCode(StatusCodes.NOT_MODIFIED);
         }
         exchange.getResponseSender().send(json);
+    }
+
+    private void sendEmpty200(HttpServerExchange exchange) {
+        exchange.setStatusCode(StatusCodes.OK);
+        exchange.getResponseSender().send("");
     }
 }

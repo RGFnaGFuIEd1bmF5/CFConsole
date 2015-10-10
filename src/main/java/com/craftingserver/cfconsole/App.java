@@ -24,6 +24,8 @@ public class App {
         handler.add("/container/create/{gameID}", new CreateContainerHandler());
         handler.add("/container/start/{containerID}", new StartContainerHandler());
         handler.add("/container/stop/{containerID}", new StopContainerHandler());
+        handler.add("/container/pause/{containerID}", new PauseContainerHandler());
+        handler.add("/container/unpause/{containerID}", new UnpauseContainerHandler();
         return handler;
     }
 }

@@ -6,12 +6,12 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
 
 /**
- * Created by buraktutanlar on 01/10/15.
+ * Created by buraktutanlar on 10/10/15.
  */
-public class StartContainerHandler extends ContainerCmdHandler {
+public class PauseContainerHandler extends ContainerCmdHandler {
 
     @Override
     protected void processCmd(String containerID) throws NotFoundException, NotModifiedException {
-        DockerManager.getInstance().startContainer(containerID);
+        DockerManager.getInstance().pauseContainer(containerID);
     }
 }

@@ -14,21 +14,8 @@ import java.util.Map;
  */
 public class StopContainerHandler extends ContainerCmdHandler {
 
-    public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-        String containerID = getContainerID(httpServerExchange);
-
-        try {
-            DockerManager.getInstance().stopContainer(containerID);
-            sendStoppedResponse(httpServerExchange);
-        } catch (NotFoundException e) {
-            sendNotFoundException(e, httpServerExchange);
-        } catch (NotModifiedException e) {
-            sendNotModifiedException(e, httpServerExchange);
-        }
-    }
-
-    private void sendStoppedResponse(HttpServerExchange exchange) {
-        exchange.setStatusCode(StatusCodes.OK);
-        exchange.getResponseSender().send("");
+    @Override
+    protected void processCmd(String containerID) throws NotFoundException, NotModifiedException {
+        DockerManager.getInstance().stopContainer(containerID);
     }
 }
