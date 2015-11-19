@@ -1,10 +1,7 @@
 package com.craftingserver.cfconsole;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.NotFoundException;
+import com.github.dockerjava.api.NotModifiedException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
@@ -17,14 +14,14 @@ import java.util.Map;
  */
 public class CreateContainerHandler implements HttpHandler {
 
-    private DockerClient dockerClient;
-
-    public CreateContainerHandler(DockerClient dockerClient) {
-        this.dockerClient = dockerClient;
-    }
-
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-        System.out.println(this.createContainer());
+        String gameID = getGameID(httpServerExchange);
+
+        if (isGameIDValid(gameID)) {
+            tryToProvideNewContainer(gameID, httpServerExchange);
+        } else {
+            sendUnsupportedGameID(gameID, httpServerExchange);
+        }
     }
 
     private String getGameID(HttpServerExchange exchange) {
@@ -41,27 +38,86 @@ public class CreateContainerHandler implements HttpHandler {
         }
     }
 
+    private void tryToProvideNewContainer(String gameID, HttpServerExchange httpServerExchange) {
+        try {
+            CreatedContainer createdContainer = createContainer(gameID);
+            sendCreatedContainer(createdContainer, httpServerExchange);
+        } catch (NotFoundException e) {
+            sendNotFoundException(e, httpServerExchange);
+        } catch (NotModifiedException e) {
+            sendNotModifiedException(e, httpServerExchange);
+        }
+    }
 
     /**
-     * Creates a container with provided gameID and returns created containerID.
+     * Creates a container with provided gameID and returns created containerID
      *
      * @param gameID
      * @return containerID
+     * @throws NotFoundException
+     * @throws NotModifiedException
      */
-    private String createContainer() {
+    private CreatedContainer createContainer(String gameID) throws NotFoundException, NotModifiedException {
+        String imageName = "itzg/minecraft-server";
+        String containerID = DockerManager.getInstance().createContainer(imageName);
+        DockerManager.getInstance().startContainer(containerID);
+        String host = getDockerHost();
 
-        ExposedPort tcp22 = ExposedPort.tcp(25565);
+        // 25565 is the default listening port of minecraft game server.
+        int exposedPort = getExposedPort(containerID, 25565);
 
-        Ports portBindings = new Ports();
-        portBindings.bind(tcp22, Ports.Binding(25565));
-
-        CreateContainerResponse container = dockerClient.createContainerCmd("itzg/minecraft-server")
-                .withEnv("EULA=TRUE","VERSION=LATEST").withCmd("/start")
-                .withExposedPorts(tcp22).withPortBindings(portBindings).withPublishAllPorts(true).exec();
-
-        dockerClient.startContainerCmd(container.getId()).exec();
-//        ,"interactive", "true","sleep", "9999","name","mc","env", "[EULA=TRUE]"
-
-        return container.getId();
+        return new CreatedContainer(host, exposedPort, containerID);
     }
+
+    private String getDockerHost() {
+        return DockerManager.getInstance().getDockerHost();
+    }
+
+    /**
+     * For More Info: Look at javadoc of getExposedPort(String, int) function in DockerManager.
+     *
+     * @param containerID
+     * @param defaultPort
+     * @return
+     */
+    private int getExposedPort(String containerID, int defaultPort) {
+        return DockerManager.getInstance().getExposedPort(containerID, defaultPort);
+    }
+
+    private void sendCreatedContainer(CreatedContainer createdContainer, HttpServerExchange exchange) {
+        String createdContainerJSON = createdContainer.toJSON();
+        if (createdContainerJSON == null) {
+            exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+        } else {
+            exchange.setStatusCode(StatusCodes.CREATED);
+        }
+        exchange.getResponseSender().send(createdContainerJSON);
+    }
+
+    private void sendNotFoundException(NotFoundException e, HttpServerExchange exchange) {
+        String json = new DockerException("NotFoundException", e.getMessage()).toJSON();
+        if (json == null) {
+            exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+        } else {
+            exchange.setStatusCode(StatusCodes.NOT_FOUND);
+        }
+        exchange.getResponseSender().send(json);
+    }
+
+    private void sendNotModifiedException(NotModifiedException e, HttpServerExchange exchange) {
+        String json = new DockerException("NotModifiedException", e.getMessage()).toJSON();
+        if (json == null) {
+            exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+        } else {
+            exchange.setStatusCode(StatusCodes.NOT_MODIFIED);
+        }
+        exchange.getResponseSender().send(json);
+    }
+
+    // TODO this function requires more attention...
+    private void sendUnsupportedGameID(String gameID, HttpServerExchange exchange) {
+        exchange.setStatusCode(StatusCodes.NOT_IMPLEMENTED);
+        exchange.getResponseSender().send("{" + gameID + ": Not implemented gameID}");
+    }
+
 }
