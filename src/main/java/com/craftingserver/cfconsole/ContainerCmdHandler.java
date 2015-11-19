@@ -35,21 +35,19 @@ public abstract class ContainerCmdHandler implements HttpHandler {
     }
 
     private void sendNotFoundException(NotFoundException e, HttpServerExchange exchange) {
-        String json = new DockerException("NotFoundException", e.getMessage()).toJSON();
-        if (json == null) {
-            exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-        } else {
-            exchange.setStatusCode(StatusCodes.NOT_FOUND);
-        }
-        exchange.getResponseSender().send(json);
+        sendException(e, "NotFoundException", StatusCodes.NOT_FOUND, exchange);
     }
 
     private void sendNotModifiedException(NotModifiedException e, HttpServerExchange exchange) {
-        String json = new DockerException("NotModifiedException", e.getMessage()).toJSON();
+        sendException(e, "NotModifiedException", StatusCodes.NOT_MODIFIED, exchange);
+    }
+
+    private void sendException(Exception exception, String exceptionName, int statusCode, HttpServerExchange exchange) {
+        String json = new DockerException(exceptionName, exception.getMessage()).toJSON();
         if (json == null) {
             exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
         } else {
-            exchange.setStatusCode(StatusCodes.NOT_MODIFIED);
+            exchange.setStatusCode(statusCode);
         }
         exchange.getResponseSender().send(json);
     }
