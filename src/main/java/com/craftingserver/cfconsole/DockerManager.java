@@ -36,7 +36,7 @@ public class DockerManager {
     private DockerManager() {
         dockerClientConfig = DockerClientConfig.createDefaultConfigBuilder()
                 .withVersion("1.12")
-                .withUri("http://178.62.65.18:3131")
+                .withUri("http://85.97.116.219:3131")
                 .withUsername("craftingserver")
                 .withPassword("asdfghjkl")
                 .withEmail("burak.tutanlar@gmail.com")
