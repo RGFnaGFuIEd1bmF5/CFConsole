@@ -2,13 +2,15 @@ package com.craftingserver.cfconsole;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Created by buraktutanlar on 24/09/15.
  */
 public class JSONModel {
 
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static ObjectMapper objectMapper = new ObjectMapper()
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
     /**
      * @return JSON representation of object or null if JsonProcessingException caught.

@@ -15,4 +15,16 @@ public class CreatedContainer extends JSONModel {
         this.containerID = containerID;
     }
 
+    public String getHost() {
+        return this.host;
+    }
+
+    public int getExposedPort() {
+        return this.exposedPort;
+    }
+
+    public String getContainerID() {
+        return this.containerID;
+    }
+
 }
