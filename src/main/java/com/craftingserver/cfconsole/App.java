@@ -14,7 +14,7 @@ public class App {
     }
 
     private static void initServer() {
-        Undertow server = Undertow.builder().addHttpListener(8085, "127.0.0.1")
+        Undertow server = Undertow.builder().addHttpListener(8085, "0.0.0.0")
                 .setHandler(getMyPathTemplateHandler()).build();
         server.start();
     }
