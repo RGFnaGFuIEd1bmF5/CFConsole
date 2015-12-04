@@ -26,6 +26,8 @@ public class App {
         handler.add("/container/stop/{containerID}", new StopContainerHandler());
         handler.add("/container/pause/{containerID}", new PauseContainerHandler());
         handler.add("/container/unpause/{containerID}", new UnpauseContainerHandler());
+        handler.add("/container/kill/{containerID}", new KillContainerHandler());
+        handler.add("/container/remove/{containerID}", new RemoveContainerHandler());
         return handler;
     }
 }
