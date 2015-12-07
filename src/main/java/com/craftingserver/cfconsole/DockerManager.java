@@ -79,6 +79,10 @@ public class DockerManager {
         dockerClient.removeContainerCmd(containerID).exec();
     }
 
+    public void restartContainer(String containerID) throws NotFoundException {
+        dockerClient.restartContainerCmd(containerID).exec();
+    }
+
     public String getDockerHost() {
         return dockerClientConfig.getUri().getHost();
     }
